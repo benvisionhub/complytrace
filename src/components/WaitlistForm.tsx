@@ -35,7 +35,7 @@ export function WaitlistForm() {
       <button disabled={loading} className="mt-4 w-full rounded-2xl bg-cyan-300 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-200 disabled:opacity-60">
         {loading ? "Saving..." : "Join design partner list"}
       </button>
-      {status ? <p className="mt-3 text-sm text-cyan-100">{status}</p> : null}
+      {status ? <p data-testid="waitlist-status" aria-live="polite" className="mt-3 text-sm text-cyan-100">{status}</p> : null}
     </form>
   );
 }
