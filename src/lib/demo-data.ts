@@ -1,0 +1,188 @@
+import { createAuditReport, generateAuditReport, type AgentTrace, type TraceEvent } from "./audit";
+
+export const demoAgentTrace: AgentTrace = {
+  id: "trace_refund_042",
+  agentName: "refund_review_agent",
+  environment: "production-shadow",
+  startedAt: "2026-05-02T08:00:00.000Z",
+  completedAt: "2026-05-02T08:04:18.000Z",
+  dataMode: "metadata_only",
+  events: [
+    {
+      id: "evt_001",
+      type: "agent_run_started",
+      timestamp: "2026-05-02T08:00:00.000Z",
+      summary: "Agent started from synthetic refund workflow. No customer payload stored.",
+      severity: "info",
+    },
+    {
+      id: "evt_002",
+      type: "redaction_completed",
+      timestamp: "2026-05-02T08:00:02.000Z",
+      summary: "Detected 2 PII-like tokens and replaced them before model context assembly.",
+      severity: "success",
+      piiDetected: 2,
+      redacted: true,
+    },
+    {
+      id: "evt_003",
+      type: "model_call_completed",
+      timestamp: "2026-05-02T08:00:07.000Z",
+      summary: "Model produced recommendation from policy facts and hashed context references.",
+      severity: "info",
+      model: "openrouter/anthropic/claude-sonnet-4.5",
+      promptHash: "sha256:9a3f0c-demo-prompt",
+      outputHash: "sha256:c8120a-demo-output",
+    },
+    {
+      id: "evt_004",
+      type: "tool_call_completed",
+      timestamp: "2026-05-02T08:00:11.000Z",
+      summary: "Synthetic order-status tool returned eligible-for-review metadata.",
+      severity: "info",
+      toolName: "get_order_status_metadata",
+    },
+    {
+      id: "evt_005",
+      type: "policy_check_completed",
+      timestamp: "2026-05-02T08:00:16.000Z",
+      summary: "Refund amount exceeded auto-approval threshold; escalation required.",
+      severity: "warning",
+      policyId: "refund_policy_v1",
+      policyDecision: "escalate",
+    },
+    {
+      id: "evt_006",
+      type: "human_approval_requested",
+      timestamp: "2026-05-02T08:00:18.000Z",
+      summary: "Ops manager review requested with metadata-only evidence pack.",
+      severity: "warning",
+      reviewer: "ops_manager_hash",
+    },
+    {
+      id: "evt_007",
+      type: "human_approval_completed",
+      timestamp: "2026-05-02T08:04:12.000Z",
+      summary: "Reviewer approved the action after confirming policy threshold rationale.",
+      severity: "success",
+      reviewer: "ops_manager_hash",
+    },
+    {
+      id: "evt_008",
+      type: "agent_run_completed",
+      timestamp: "2026-05-02T08:04:18.000Z",
+      summary: "Agent completed with audit evidence ready for export.",
+      severity: "success",
+    },
+  ],
+};
+
+export const demoTraceEvents: TraceEvent[] = [
+  {
+    id: "tr_demo_001",
+    agentName: "Refund Review Agent",
+    workflow: "refund-policy-escalation",
+    occurredAt: "2026-05-02T08:00:00.000Z",
+    environment: "production-shadow",
+    metadataOnly: true,
+    rawPromptStored: false,
+    customerDataStored: false,
+    redactionClass: "metadata_only",
+    modelProvider: "OpenRouter",
+    modelName: "anthropic/claude-sonnet-4.5",
+    actionCategory: "refund-review",
+    retentionDays: 180,
+    policies: [
+      {
+        id: "pol_refund_001",
+        name: "Refund threshold requires human approval",
+        status: "warn",
+        evidence: "Policy decision escalated; human approval was recorded.",
+      },
+      {
+        id: "pol_data_001",
+        name: "No raw prompt or customer payload storage",
+        status: "pass",
+        evidence: "Only hashes, metadata, and policy decisions retained.",
+      },
+    ],
+    approvals: [
+      {
+        reviewerRole: "Ops manager",
+        status: "approved",
+        decidedAt: "2026-05-02T08:04:12.000Z",
+        evidence: "Approved synthetic escalation evidence pack.",
+      },
+    ],
+  },
+  {
+    id: "tr_demo_002",
+    agentName: "Support Summary Agent",
+    workflow: "regulated-support-summary",
+    occurredAt: "2026-05-02T08:15:00.000Z",
+    environment: "sandbox",
+    metadataOnly: true,
+    rawPromptStored: false,
+    customerDataStored: false,
+    redactionClass: "redacted_reference",
+    modelProvider: "OpenRouter",
+    modelName: "openai/gpt-4.1-mini",
+    actionCategory: "support-summary",
+    retentionDays: 90,
+    policies: [
+      {
+        id: "pol_support_001",
+        name: "Support summaries must cite source categories",
+        status: "pass",
+        evidence: "Report references source categories, not raw customer messages.",
+      },
+    ],
+    approvals: [
+      {
+        reviewerRole: "Support lead",
+        status: "approved",
+        decidedAt: "2026-05-02T08:18:00.000Z",
+        evidence: "Approved for sandbox demonstration.",
+      },
+    ],
+  },
+  {
+    id: "tr_demo_003",
+    agentName: "Vendor Risk Agent",
+    workflow: "ai-vendor-questionnaire-review",
+    occurredAt: "2026-05-02T08:22:00.000Z",
+    environment: "sandbox",
+    metadataOnly: true,
+    rawPromptStored: false,
+    customerDataStored: false,
+    redactionClass: "metadata_only",
+    modelProvider: "OpenRouter",
+    modelName: "google/gemini-2.5-flash",
+    actionCategory: "vendor-risk",
+    retentionDays: 365,
+    policies: [
+      {
+        id: "pol_vendor_001",
+        name: "AI vendor data-use disclosure present",
+        status: "pass",
+        evidence: "Synthetic vendor disclosed no customer-data training.",
+      },
+      {
+        id: "pol_vendor_002",
+        name: "Subprocessor evidence complete",
+        status: "warn",
+        evidence: "One model subprocessor needs annual review.",
+      },
+    ],
+    approvals: [
+      {
+        reviewerRole: "Vendor risk analyst",
+        status: "pending",
+        evidence: "Awaiting quarterly review.",
+      },
+    ],
+  },
+];
+
+export const demoAgentAuditReport = createAuditReport(demoAgentTrace);
+export const demoEvidencePack = generateAuditReport(demoTraceEvents);
