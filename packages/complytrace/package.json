@@ -1,0 +1,25 @@
+{
+  "name": "@complytrace/sdk",
+  "version": "0.1.0",
+  "description": "Compliance trace SDK for AI agents: metadata-only tracing, redaction, policy evidence, audit packets, and tamper-evident hash chains.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run src/**/*.test.ts"
+  },
+  "keywords": ["ai", "compliance", "audit", "trace", "fintech", "agents"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  }
+}

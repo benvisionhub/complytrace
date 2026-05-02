@@ -1,9 +1,8 @@
 import { AiCritique } from "@/components/AiCritique";
 import { WaitlistForm } from "@/components/WaitlistForm";
-import { demoAgentAuditReport, demoAgentTrace, demoEvidencePack, demoTraceEvents } from "@/lib/demo-data";
-import { riskScore, summarizeTrace } from "@/lib/audit";
+import { demoComplianceAuditPacket, demoComplianceReport, demoComplianceTrace } from "@/lib/compliance/product";
 
-const summary = summarizeTrace(demoAgentTrace);
+const summary = demoComplianceReport.traceSummary;
 const stats = [
   ["Events captured", summary.totalEvents.toString()],
   ["Policy checks", summary.policyChecks.toString()],
@@ -52,7 +51,7 @@ export default function Home() {
               <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div>
                   <p className="text-sm text-slate-400">Trace</p>
-                  <h2 className="text-xl font-semibold">{demoAgentTrace.id}</h2>
+                  <h2 className="text-xl font-semibold">{demoComplianceTrace.id}</h2>
                 </div>
                 <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-sm text-emerald-200">{summary.redactionPosture}</span>
               </div>
@@ -65,7 +64,7 @@ export default function Home() {
                 ))}
               </div>
               <div className="mt-5 space-y-3">
-                {demoAgentTrace.events.slice(0, 5).map((event) => (
+                {demoComplianceTrace.events.slice(0, 5).map((event) => (
                   <div key={event.id} className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-slate-200">{event.type.replaceAll("_", " ")}</p>
@@ -88,29 +87,24 @@ export default function Home() {
             <p className="mt-4 text-slate-300">The demo shows a synthetic refund-review agent that escalates a decision, records redaction evidence, and captures human approval.</p>
           </div>
           <div className="grid gap-5 lg:grid-cols-3">
-            {demoTraceEvents.map((event) => {
-              const score = riskScore(event);
+            {demoComplianceTrace.events.filter((event) => ["model_call_completed", "tool_call_completed", "policy_check_completed"].includes(event.type)).map((event) => {
               return (
                 <div key={event.id} className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm text-slate-400">{event.workflow}</p>
-                      <h3 className="mt-2 text-xl font-semibold">{event.agentName}</h3>
+                      <p className="text-sm text-slate-400">{event.type.replaceAll("_", " ")}</p>
+                      <h3 className="mt-2 text-xl font-semibold">{event.summary}</h3>
                     </div>
-                    <span className="rounded-full bg-cyan-300/10 px-3 py-1 text-sm text-cyan-100">{score}</span>
+                    <span className="rounded-full bg-cyan-300/10 px-3 py-1 text-sm text-cyan-100">{event.severity}</span>
                   </div>
                   <div className="mt-5 space-y-2 text-sm text-slate-300">
-                    <p>Model: {event.modelProvider} / {event.modelName}</p>
-                    <p>Raw prompt stored: {event.rawPromptStored ? "yes" : "no"}</p>
-                    <p>Customer data stored: {event.customerDataStored ? "yes" : "no"}</p>
-                    <p>Retention: {event.retentionDays} days</p>
+                    <p>Trace ID: {demoComplianceTrace.id}</p>
+                    <p>Workflow: {demoComplianceTrace.workflow}</p>
+                    <p>Raw payload stored: no</p>
+                    <p>Root hash: {demoComplianceAuditPacket.evidence.rootHash.slice(0, 16)}…</p>
                   </div>
-                  <div className="mt-5 space-y-2">
-                    {event.policies.map((policy) => (
-                      <div key={policy.id} className="rounded-2xl bg-slate-950 p-3 text-sm">
-                        <span className="font-semibold text-cyan-100">{policy.status.toUpperCase()}</span> {policy.name}
-                      </div>
-                    ))}
+                  <div className="mt-5 rounded-2xl bg-slate-950 p-3 text-sm text-slate-300">
+                    Redacted fields: {event.redaction?.redactedFields.length ?? 0} · Policy: {event.policyDecision ?? "n/a"}
                   </div>
                 </div>
               );
@@ -127,22 +121,54 @@ export default function Home() {
             <p className="mt-4 text-slate-300">ComplyTrace turns runtime metadata into artifacts security, compliance, model risk, and internal audit can inspect.</p>
           </div>
           <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="text-2xl font-semibold">{demoAgentAuditReport.title}</h3>
-            <p className="mt-4 leading-7 text-slate-300">{demoAgentAuditReport.executiveSummary}</p>
+            <h3 className="text-2xl font-semibold">{demoComplianceReport.title}</h3>
+            <p className="mt-4 leading-7 text-slate-300">{demoComplianceReport.executiveSummary}</p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {demoAgentAuditReport.evidenceChecklist.map((item) => (
+              {demoComplianceReport.evidenceChecklist.map((item) => (
                 <div key={item} className="rounded-2xl bg-slate-950 p-4 text-sm text-slate-200">✓ {item}</div>
               ))}
             </div>
             <div className="mt-5 rounded-2xl bg-slate-950 p-4 text-sm text-slate-300">
               <p className="font-semibold text-white">Data minimization statement</p>
-              <p className="mt-2">{demoAgentAuditReport.dataMinimizationStatement}</p>
+              <p className="mt-2">{demoComplianceReport.dataMinimizationStatement}</p>
             </div>
             <div className="mt-5 rounded-2xl bg-slate-950 p-4 text-sm text-slate-300">
-              <p className="font-semibold text-white">Evidence pack rollup</p>
-              <p className="mt-2">{demoEvidencePack.dataMinimizationStatement}</p>
+              <p className="font-semibold text-white">Tamper-evident evidence root</p>
+              <p className="mt-2 break-all font-mono text-cyan-100">{demoComplianceAuditPacket.evidence.rootHash}</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-16 sm:px-10 lg:px-16">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-200">Installable SDK</p>
+            <h2 className="mt-3 text-4xl font-semibold">Wrap your agent. Get an audit packet.</h2>
+            <p className="mt-4 text-slate-300">The product is a TypeScript package, not only a UI: tracing wrapper, redaction, policy checks, approvals, hash-chain verification, and Supabase persistence via API.</p>
+          </div>
+          <pre className="overflow-x-auto rounded-3xl border border-slate-800 bg-slate-950 p-5 text-sm text-cyan-50"><code>{`npm install @complytrace/sdk
+
+import { createComplianceTrace } from "@complytrace/sdk";
+
+const ct = createComplianceTrace({
+  app: "refund-agent",
+  environment: "production-shadow",
+});
+
+await ct.trace("refund-review", async (trace) => {
+  const model = trace.modelCall("openrouter", "anthropic/claude-sonnet", {
+    prompt,
+    output,
+  });
+  trace.toolCall("payments", "refund_lookup", toolInput);
+  trace.policyCheck("human-review-required", {
+    decision: "escalate",
+    reason: "Refund exceeds auto-approval threshold",
+    severity: "high",
+  });
+  trace.humanApproval("ops_manager", "approved", "JIRA-42");
+});`}</code></pre>
         </div>
       </section>
 

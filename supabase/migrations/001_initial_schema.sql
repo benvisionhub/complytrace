@@ -20,10 +20,16 @@ create table if not exists public.agent_traces (
   environment text not null,
   data_mode text not null,
   payload jsonb not null,
+  audit_packet jsonb,
+  root_hash text,
+  risk_label text,
+  risk_score integer,
   created_at timestamptz not null default now()
 );
 
 create index if not exists agent_traces_trace_id_idx on public.agent_traces(trace_id);
+create index if not exists agent_traces_root_hash_idx on public.agent_traces(root_hash);
+create index if not exists agent_traces_risk_label_idx on public.agent_traces(risk_label);
 create index if not exists agent_traces_created_at_idx on public.agent_traces(created_at desc);
 
 alter table public.waitlist_signups enable row level security;

@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@complytrace/sdk": ["./packages/complytrace/src/index.ts"]
     }
   },
   "include": [
