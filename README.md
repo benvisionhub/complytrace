@@ -1,13 +1,55 @@
 # ComplyTrace
 
-Compliance-grade audit trails for regulated fintech AI agents — with metadata-only tracing, policy logs, redaction evidence, human approval records, and audit-ready evidence packs.
+Compliance-grade audit trails for regulated fintech AI agents.
 
-- **No customer financial data required**
-- **No raw prompt storage by default**
-- **Server-side OpenRouter and Supabase keys only**
-- Independent project, not affiliated with or endorsed by JPMorgan Chase & Co.
+## What this MVP includes
 
-## Local development
+- Next.js landing page and demo dashboard.
+- Synthetic AI-agent trace explorer.
+- Audit evidence report generated from metadata only.
+- Supabase-backed waitlist and trace persistence API routes.
+- OpenRouter-backed audit critique API route.
+- Vitest coverage for core audit functions.
+
+## Data posture
+
+The demo does not use real customer data. The intended product default is metadata-only:
+
+- no raw prompt storage by default
+- no raw output storage by default
+- no KYC documents
+- no transaction payloads
+- no customer financial records
+- hashes, policy IDs, redaction classes, model metadata, and approval records only
+
+## Environment variables
+
+Required for full deployment:
+
+```bash
+SUPABASE_URL=
+SUPABASE_SERVICE_KEY=
+OPENROUTER_API_KEY=
+NEXT_PUBLIC_APP_URL=
+```
+
+Optional:
+
+```bash
+SUPABASE_PUBLISHABLE_DEFAULT_KEY=
+```
+
+## Supabase schema
+
+Apply:
+
+```sql
+supabase/migrations/001_initial_schema.sql
+```
+
+The API routes are resilient: if tables are missing, they return a schema warning instead of breaking the demo.
+
+## Development
 
 ```bash
 npm install
@@ -18,14 +60,6 @@ npm run build
 npm run dev
 ```
 
-## Environment variables
+## Disclaimer
 
-Required for full hosted functionality:
-
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_KEY` (server-side only)
-- `OPENROUTER_API_KEY` (server-side only)
-
-## Supabase
-
-Apply `supabase/migrations/001_initial_schema.sql` in the Supabase SQL editor or CLI, then optionally run the seed script after wiring a TS runner. The app falls back to static synthetic metadata if the table is not present.
+Independent project. Not affiliated with or endorsed by JPMorgan Chase & Co.

@@ -1,98 +1,184 @@
-"use client";
+import { AiCritique } from "@/components/AiCritique";
+import { WaitlistForm } from "@/components/WaitlistForm";
+import { demoAgentAuditReport, demoAgentTrace, demoEvidencePack, demoTraceEvents } from "@/lib/demo-data";
+import { riskScore, summarizeTrace } from "@/lib/audit";
 
-import { useMemo, useState } from "react";
-import { generateAuditReport, riskScore, summarizeTraces } from "@/lib/audit";
-import { sampleTraces } from "@/lib/sample-data";
-
-function Badge({ children, tone = "slate" }: { children: React.ReactNode; tone?: "green" | "amber" | "red" | "blue" | "slate" }) {
-  const tones = {
-    green: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    amber: "bg-amber-50 text-amber-800 ring-amber-200",
-    red: "bg-rose-50 text-rose-700 ring-rose-200",
-    blue: "bg-sky-50 text-sky-700 ring-sky-200",
-    slate: "bg-slate-100 text-slate-700 ring-slate-200",
-  };
-  return <span className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${tones[tone]}`}>{children}</span>;
-}
+const summary = summarizeTrace(demoAgentTrace);
+const stats = [
+  ["Events captured", summary.totalEvents.toString()],
+  ["Policy checks", summary.policyChecks.toString()],
+  ["Human approvals", summary.humanApprovals.toString()],
+  ["Data mode", "Metadata-only"],
+];
 
 export default function Home() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("");
-  const [critique, setCritique] = useState("");
-  const [loading, setLoading] = useState(false);
-  const traces = sampleTraces;
-  const summary = useMemo(() => summarizeTraces(traces), [traces]);
-  const report = useMemo(() => generateAuditReport(traces), [traces]);
-
-  async function joinWaitlist(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus("Submitting metadata-only waitlist request…");
-    const res = await fetch("/api/waitlist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, role: "Compliance / AI governance", interest: "metadata-only AI audit trails" }) });
-    const data = await res.json();
-    setStatus(data.message || data.error || "Submitted.");
-  }
-
-  async function runCritique() {
-    setLoading(true);
-    setCritique("");
-    const res = await fetch("/api/audit-critique", { method: "POST" });
-    const data = await res.json();
-    setCritique(`[${data.mode}] ${data.critique}`);
-    setLoading(false);
-  }
-
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_.95fr] lg:py-24">
-        <div>
-          <Badge tone="blue">Metadata-only compliance evidence for fintech AI agents</Badge>
-          <h1 className="mt-6 text-5xl font-semibold tracking-tight md:text-7xl">Audit trails regulators can inspect. Customer data your app never needs to store.</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">ComplyTrace records policy decisions, redaction evidence, human approvals, model metadata, and retention posture — not raw prompts, account records, transaction payloads, or customer financial data.</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#demo" className="rounded-full bg-white px-5 py-3 font-semibold text-slate-950">View demo dashboard</a>
-            <a href="#waitlist" className="rounded-full border border-white/20 px-5 py-3 font-semibold text-white">Join waitlist</a>
+      <section className="relative overflow-hidden px-6 py-8 sm:px-10 lg:px-16">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.25),transparent_30%),radial-gradient(circle_at_70%_20%,rgba(99,102,241,0.2),transparent_25%)]" />
+        <div className="relative mx-auto max-w-7xl">
+          <nav className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-300 font-black text-slate-950">CT</div>
+              <span className="font-semibold tracking-tight">ComplyTrace</span>
+            </div>
+            <div className="hidden items-center gap-6 text-sm text-slate-300 md:flex">
+              <a href="#demo">Demo</a>
+              <a href="#audit">Audit pack</a>
+              <a href="#pricing">Pricing</a>
+              <a href="#waitlist" className="rounded-full border border-cyan-300/40 px-4 py-2 text-cyan-100">Design partner</a>
+            </div>
+          </nav>
+
+          <div className="grid gap-12 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div>
+              <div className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-sm text-cyan-100">
+                Metadata-only audit trails for regulated AI agents
+              </div>
+              <h1 className="mt-7 max-w-4xl text-5xl font-semibold tracking-tight text-white sm:text-7xl">
+                Ship fintech AI agents with evidence compliance can inspect.
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+                ComplyTrace records model calls, tool calls, redaction posture, policy decisions, and human approvals — without storing customer financial data, raw prompts, KYC documents, or transaction payloads by default.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a href="#demo" className="rounded-2xl bg-cyan-300 px-6 py-4 text-center font-semibold text-slate-950 hover:bg-cyan-200">View live demo</a>
+                <a href="#waitlist" className="rounded-2xl border border-slate-700 px-6 py-4 text-center font-semibold text-white hover:border-cyan-300">Join design partners</a>
+              </div>
+              <p className="mt-5 text-xs text-slate-500">Independent project. Not affiliated with or endorsed by JPMorgan Chase & Co. Demo uses synthetic metadata only.</p>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-800 bg-slate-900/80 p-5 shadow-2xl shadow-cyan-950/40">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <p className="text-sm text-slate-400">Trace</p>
+                  <h2 className="text-xl font-semibold">{demoAgentTrace.id}</h2>
+                </div>
+                <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-sm text-emerald-200">{summary.redactionPosture}</span>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                {stats.map(([label, value]) => (
+                  <div key={label} className="rounded-2xl bg-slate-950 p-4">
+                    <p className="text-xs text-slate-500">{label}</p>
+                    <p className="mt-2 text-2xl font-semibold">{value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 space-y-3">
+                {demoAgentTrace.events.slice(0, 5).map((event) => (
+                  <div key={event.id} className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-slate-200">{event.type.replaceAll("_", " ")}</p>
+                      <span className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-300">{event.severity}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-400">{event.summary}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <p className="mt-5 text-sm text-slate-400">Independent project. Not affiliated with or endorsed by JPMorgan Chase & Co. Synthetic demo data only.</p>
-        </div>
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl">
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              [summary.total, "synthetic traces"],
-              [summary.metadataOnly, "metadata-only"],
-              [summary.noRawPrompts, "raw prompts stored"],
-              [summary.humanApproved, "human approvals"],
-            ].map(([value, label]) => (
-              <div key={label} className="rounded-2xl bg-slate-900 p-5"><div className="text-4xl font-bold">{label === "raw prompts stored" ? 0 : value}</div><div className="mt-1 text-sm text-slate-400">{label}</div></div>
-            ))}
-          </div>
-          <div className="mt-5 rounded-2xl bg-emerald-400/10 p-5 text-emerald-100 ring-1 ring-emerald-400/20">Evidence pack excludes customer financial data by design. Service-role persistence is server-side only.</div>
         </div>
       </section>
 
-      <section id="demo" className="bg-white px-6 py-16 text-slate-950">
+      <section id="demo" className="px-6 py-16 sm:px-10 lg:px-16">
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div><Badge tone="green">Product demo dashboard</Badge><h2 className="mt-4 text-4xl font-semibold">Trace explorer</h2><p className="mt-3 max-w-3xl text-slate-600">Each row is synthetic metadata: policy outcomes, redaction classification, approval state, model identifier, and retention window.</p></div>
-            <button onClick={runCritique} className="rounded-full bg-slate-950 px-5 py-3 font-semibold text-white disabled:opacity-60" disabled={loading}>{loading ? "Running AI critique…" : "Generate AI audit critique"}</button>
+          <div className="mb-8 max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-200">Product demo</p>
+            <h2 className="mt-3 text-4xl font-semibold">A compliance flight recorder for agent runs.</h2>
+            <p className="mt-4 text-slate-300">The demo shows a synthetic refund-review agent that escalates a decision, records redaction evidence, and captures human approval.</p>
           </div>
-          {critique && <div className="mt-6 whitespace-pre-wrap rounded-2xl border border-sky-200 bg-sky-50 p-5 text-sm leading-6 text-sky-950">{critique}</div>}
-          <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {traces.map((trace) => {
-              const score = riskScore(trace);
-              return <article key={trace.id} className="rounded-3xl border border-slate-200 p-6 shadow-sm">
-                <div className="flex items-start justify-between gap-3"><div><h3 className="text-xl font-semibold">{trace.agentName}</h3><p className="mt-1 text-sm text-slate-500">{trace.workflow}</p></div><Badge tone={score < 30 ? "green" : score < 60 ? "amber" : "red"}>Risk {score}</Badge></div>
-                <dl className="mt-5 space-y-2 text-sm"><div className="flex justify-between"><dt>Redaction</dt><dd className="font-medium">{trace.redactionClass}</dd></div><div className="flex justify-between"><dt>Environment</dt><dd>{trace.environment}</dd></div><div className="flex justify-between"><dt>Retention</dt><dd>{trace.retentionDays} days</dd></div><div className="flex justify-between"><dt>Raw prompt stored</dt><dd>No</dd></div></dl>
-                <div className="mt-5 space-y-2">{trace.policies.map((policy) => <div key={policy.id} className="rounded-xl bg-slate-50 p-3 text-sm"><Badge tone={policy.status === "pass" ? "green" : policy.status === "warn" ? "amber" : "red"}>{policy.status}</Badge><p className="mt-2 font-medium">{policy.name}</p><p className="mt-1 text-slate-600">{policy.evidence}</p></div>)}</div>
-              </article>;
+          <div className="grid gap-5 lg:grid-cols-3">
+            {demoTraceEvents.map((event) => {
+              const score = riskScore(event);
+              return (
+                <div key={event.id} className="rounded-3xl border border-slate-800 bg-slate-900 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-slate-400">{event.workflow}</p>
+                      <h3 className="mt-2 text-xl font-semibold">{event.agentName}</h3>
+                    </div>
+                    <span className="rounded-full bg-cyan-300/10 px-3 py-1 text-sm text-cyan-100">{score}</span>
+                  </div>
+                  <div className="mt-5 space-y-2 text-sm text-slate-300">
+                    <p>Model: {event.modelProvider} / {event.modelName}</p>
+                    <p>Raw prompt stored: {event.rawPromptStored ? "yes" : "no"}</p>
+                    <p>Customer data stored: {event.customerDataStored ? "yes" : "no"}</p>
+                    <p>Retention: {event.retentionDays} days</p>
+                  </div>
+                  <div className="mt-5 space-y-2">
+                    {event.policies.map((policy) => (
+                      <div key={policy.id} className="rounded-2xl bg-slate-950 p-3 text-sm">
+                        <span className="font-semibold text-cyan-100">{policy.status.toUpperCase()}</span> {policy.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
             })}
           </div>
         </div>
       </section>
 
-      <section className="bg-slate-50 px-6 py-16 text-slate-950">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200"><Badge tone="blue">Sample audit report</Badge><h2 className="mt-4 text-3xl font-semibold">Audit-ready evidence pack</h2><p className="mt-4 text-slate-600">{report.dataMinimizationStatement}</p><ul className="mt-6 space-y-2 text-sm text-slate-700">{report.evidence.slice(0, 9).map((line) => <li key={line} className="rounded-xl bg-slate-50 p-3">{line}</li>)}</ul><p className="mt-5 font-medium">Recommendation: {report.recommendation}</p></div>
-          <div id="waitlist" className="rounded-3xl bg-slate-950 p-8 text-white shadow-sm"><Badge>Pricing / CTA</Badge><h2 className="mt-4 text-3xl font-semibold">Design partner waitlist</h2><p className="mt-4 text-slate-300">Early pricing hypothesis: free synthetic demo, team evidence packs from $499/month, enterprise deployment with private retention controls. No confidential data is requested in this form.</p><form onSubmit={joinWaitlist} className="mt-6 space-y-3"><input aria-label="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required type="email" placeholder="work@email.com" className="w-full rounded-2xl border border-white/10 bg-white px-4 py-3 text-slate-950" /><button className="w-full rounded-2xl bg-emerald-400 px-4 py-3 font-semibold text-slate-950">Request early access</button></form>{status && <p className="mt-4 text-sm text-emerald-200">{status}</p>}<p className="mt-6 text-xs text-slate-400">We avoid raw prompt/customer-data storage by default; waitlist stores contact metadata only if Supabase is configured.</p></div>
+      <section id="audit" className="px-6 py-16 sm:px-10 lg:px-16">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-200">Audit pack</p>
+            <h2 className="mt-3 text-4xl font-semibold">Evidence, not vibes.</h2>
+            <p className="mt-4 text-slate-300">ComplyTrace turns runtime metadata into artifacts security, compliance, model risk, and internal audit can inspect.</p>
+          </div>
+          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+            <h3 className="text-2xl font-semibold">{demoAgentAuditReport.title}</h3>
+            <p className="mt-4 leading-7 text-slate-300">{demoAgentAuditReport.executiveSummary}</p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {demoAgentAuditReport.evidenceChecklist.map((item) => (
+                <div key={item} className="rounded-2xl bg-slate-950 p-4 text-sm text-slate-200">✓ {item}</div>
+              ))}
+            </div>
+            <div className="mt-5 rounded-2xl bg-slate-950 p-4 text-sm text-slate-300">
+              <p className="font-semibold text-white">Data minimization statement</p>
+              <p className="mt-2">{demoAgentAuditReport.dataMinimizationStatement}</p>
+            </div>
+            <div className="mt-5 rounded-2xl bg-slate-950 p-4 text-sm text-slate-300">
+              <p className="font-semibold text-white">Evidence pack rollup</p>
+              <p className="mt-2">{demoEvidencePack.dataMinimizationStatement}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-16 sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-7xl">
+          <AiCritique />
+        </div>
+      </section>
+
+      <section id="pricing" className="px-6 py-16 sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-7xl rounded-[2rem] border border-cyan-300/20 bg-cyan-300/10 p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-100">Design partner pricing</p>
+          <div className="mt-4 grid gap-6 lg:grid-cols-3">
+            {[
+              ["Pilot", "$500/mo", "One sandbox agent, audit report template, hands-on onboarding."],
+              ["Startup", "$1.5k/mo", "Five agents, Supabase-backed evidence store, team reports."],
+              ["Regulated", "Custom", "VPC/local collector, SSO, retention policies, custom controls."],
+            ].map(([name, price, description]) => (
+              <div key={name} className="rounded-3xl bg-slate-950 p-6">
+                <h3 className="text-2xl font-semibold">{name}</h3>
+                <p className="mt-3 text-3xl font-bold text-cyan-200">{price}</p>
+                <p className="mt-3 text-slate-300">{description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="waitlist" className="px-6 py-20 sm:px-10 lg:px-16">
+        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-200">Get involved</p>
+            <h2 className="mt-3 text-4xl font-semibold">Bring one AI-agent workflow. We’ll map the evidence pack.</h2>
+            <p className="mt-4 text-slate-300">Best fit: AI SaaS selling into financial services, fintech startups deploying internal agents, and regulated teams needing metadata-only evidence.</p>
+          </div>
+          <WaitlistForm />
         </div>
       </section>
     </main>
